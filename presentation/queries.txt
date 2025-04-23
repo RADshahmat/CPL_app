@@ -1,0 +1,63 @@
+UPDATE `players`
+SET `sr` = ROUND((`runs` / `balls_played`) * 100, 2)
+WHERE `balls_played` > 0;
+
+UPDATE `players`
+SET `ecn` = ROUND(`runs_given` / (`overs_bowled` / 6), 2)
+WHERE `overs_bowled` > 0;
+
+
+////////////////////////////////////////////////////////////////////////////////////
+
+
+-- Step 1: Aggregate the data in the squad table
+SELECT 
+    player_id,
+    SUM(runs) AS total_runs,
+    SUM(balls_played) AS total_balls_played,
+    SUM(overs_bowled) AS total_overs_bowled,
+    SUM(runs_given) AS total_runs_given,
+    SUM(wickets) AS total_wickets
+FROM squad
+GROUP BY player_id;
+
+-- Step 2: Update the players table with the aggregated data
+UPDATE players p
+JOIN (
+    SELECT 
+        player_id,
+        SUM(runs) AS total_runs,
+        SUM(balls_played) AS total_balls_played,
+        SUM(overs_bowled) AS total_overs_bowled,
+        SUM(runs_given) AS total_runs_given,
+        SUM(wickets) AS total_wickets
+    FROM squad
+    GROUP BY player_id
+) s ON p.ID = s.player_id
+SET 
+    p.runs = s.total_runs,
+    p.balls_played = s.total_balls_played,
+    p.overs_bowled = s.total_overs_bowled,
+    p.runs_given = s.total_runs_given,
+    p.wickets = s.total_wickets;
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+-- Update the matches column in the players table based on the occurrences of player_id in the squad table
+UPDATE players p
+JOIN (
+    SELECT 
+        player_id,
+        COUNT(*) AS total_matches
+    FROM squad
+    GROUP BY player_id
+) s ON p.ID = s.player_id
+SET 
+    p.matches = s.total_matches;
+////////////////////////////////////////////////////////////////////////////////////////////
+
+UPDATE `squad` SET `runs`='0',`sr`='0',`balls_played`='0',`runs_given`='0',`overs_bowled`='0',`wickets`='0',`ecn`='0' WHERE match_id=
+
+////////////////////////////////////////////////////////////////////////////////////////////
+SELECT players.name,squad.* FROM `squad` INNER JOIN players ON players.ID=squad.player_id WHERE match_id=
